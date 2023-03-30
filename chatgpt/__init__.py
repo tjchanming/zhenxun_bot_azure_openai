@@ -27,6 +27,7 @@ __plugin_author__ = "gaoy"
 __plugin_settings__ = {"level": 5, "default_status": True, "limit_superuser": False, }
 
 Config.add_plugin_config("ChatGPT", "API_KEY", None, name="ChatGPT", help_="从Azure OpenAI Service 获取", default_value=None, )
+Config.add_plugin_config("ChatGPT", "url", None, name="ChatGPT", help_="从Azure OpenAI Service 获取", default_value=None, )
 Config.add_plugin_config("ChatGPT", "PROXY", None, name="ChatGPT", help_="如有代理需要，在此处填写你的代理地址", default_value=None, )
 
 ai = on_message(priority=990)
@@ -34,7 +35,7 @@ possibility_set = on_command("设定ChatGPT回复概率", priority=5, block=True
 reset = on_command("重置ChatGPT", priority=5, block=True)
 system_prompt_set = on_command("预设ChatGPT", priority=5, block=True)
 
-url = 'https://mare.openai.azure.com/openai/deployments/ChatGPT/completions?api-version=2022-12-01'
+#url = 'https://mare.openai.azure.com/openai/deployments/ChatGPT/completions?api-version=2022-12-01'
 AI_NAME = 'ChatGPT'
 DEFAULT_POSSIBILITY = 0.2
 
@@ -43,6 +44,7 @@ possibilities = {}
 context_length = 5
 
 api_key = Config.get_config("ChatGPT", "API_KEY")
+url = Config.get_config("ChatGPT", "url")
 proxy = Config.get_config("ChatGPT", "PROXY")
 system_prompt  = ''
 
@@ -110,10 +112,11 @@ async def _(bot: Bot, event: MessageEvent, state: T_State):
         conversations[chat_id] = conversation
 
     if not message_to_me:
-        possibility = possibilities.get(chat_id, DEFAULT_POSSIBILITY)
-        if random.random() > possibility:
-            logger.info(f"ChatGPT received message but will not call API")
-            return
+        #possibility = possibilities.get(chat_id, DEFAULT_POSSIBILITY)
+        #if random.random() > possibility:
+        #    logger.info(f"ChatGPT received message but will not call API")
+        #    return
+        return
         
     conversation[0].append({"sender": event.user_id, "text": msg})
 
@@ -144,6 +147,8 @@ def create_prompt(messages):
 async def ask(conversation):
     if not (key := Config.get_config("ChatGPT", "API_KEY")):
         raise Exception("未配置API_KEY,请在config.yaml文件中进行配置")
+    if not (key := Config.get_config("ChatGPT", "url")):
+        raise Exception("未配置url,请在config.yaml文件中进行配置")
     
     proxies = {"https://": proxies} if (proxies := Config.get_config("ChatGPT", "PROXY")) else None
     prompt = create_prompt(conversation)
